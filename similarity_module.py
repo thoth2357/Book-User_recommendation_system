@@ -105,40 +105,41 @@ def euclidean_similarity(user_preference, id_1, id_2, similarity_type):
         print('Invalid similarity type. Choose "user" or "book".')
         return None
 
-def cosine_distance(user_preference, id_1, id_2, similarity_type):
-    """
-    Computes the cosine distance between books or users. 
-    Cosine similarity is commonly used in document similarity and text mining.
-    """
-    if similarity_type == 'user':
-        common_books = set(user_preference['Ratings'][id_1].keys()).intersection(user_preference['Ratings'][id_2].keys())
-        if common_books:
-            feature_calculation = []
-            for book in common_books:
-                try:
-                    book_features = [
-                        int(user_preference['Books'][book]['Book-Title']),
-                        int(user_preference['Books'][book]['Book-Author']),
-                        int(user_preference['Books'][book]['Year-Of-Publication']),
-                        int(user_preference['Ratings'][id_1][book]['book-ratings'].replace('"', '')),
-                        int(user_preference['Ratings'][id_2][book]['book-ratings'].replace('"', ''))
-                    ]
-                    dot_product = sum(a*b for a, b in zip(book_features[3:], book_features[3:]))
-                    norm_features1 = sum(a*a for a in book_features[3:]) ** 0.5
-                    norm_features2 = norm_features1
-                    cosine_distance = dot_product / (norm_features1*norm_features2)
-                    feature_calculation.append(cosine_distance)
-                except KeyError:
-                    pass
-            if feature_calculation:
-                return sum(feature_calculation) / len(feature_calculation)
-            else:
-                print('No common books found between the users')
-        else:
-            print('No common books found between the users')
+def cosine_similarity(user_preference, id_1, id_2, type_):
+    '''
+    Computes the cosine similarity between books or users. Cosine similarity is commonly used in document similarity 
+    and text mining.
+    '''
+    if type_ == 'user':
+        # Get features for both users
+        user1_features, user2_features = helper_function(user_preference, id_1, id_2)
 
-    elif similarity_type == 'book':
+        # If there are common books between the users, compute cosine similarity
+        if user1_features and user2_features:
+            cosine_similarities = []
+            for book, features1 in user1_features.items():
+                features2 = user2_features.get(book)
+                if features2:
+                    # Compute dot product and norm
+                    dot_product = sum([a * b for a, b in zip(features1, features2)])
+                    norm_features1 = sum([a ** 2 for a in features1]) ** 0.5
+                    norm_features2 = sum([a ** 2 for a in features2]) ** 0.5
+                    
+                    # Compute cosine similarity
+                    cosine_similarity = dot_product / (norm_features1 * norm_features2)
+                    cosine_similarities.append(cosine_similarity)
+
+            # Compute the average cosine similarity across all common books
+            if cosine_similarities:
+                return sum(cosine_similarities) / len(cosine_similarities)
+            else:
+                return None
+        else:
+            return None
+
+    elif type_ == 'book':
         try:
+            # Retrieve features for the two books
             features1 = [
                 int(user_preference['Books'][id_1]['Book-Title']),
                 int(user_preference['Books'][id_1]['Book-Author']),
@@ -149,13 +150,20 @@ def cosine_distance(user_preference, id_1, id_2, similarity_type):
                 int(user_preference['Books'][id_2]['Book-Author']),
                 int(user_preference['Books'][id_2]['Year-Of-Publication'])
             ]
-            dot_product = sum(a*b for a, b in zip(features1, features2))
-            norm_features1 = sum(a*a for a in features1) ** 0.5
-            norm_features2 = sum(a*a for a in features2) ** 0.5
-            cosine_distance = dot_product / (norm_features1*norm_features2)
-            return cosine_distance
+
+            # Compute dot product and norm
+            dot_product = sum([a * b for a, b in zip(features1, features2)])
+            norm_features1 = sum([a ** 2 for a in features1]) ** 0.5
+            norm_features2 = sum([a ** 2 for a in features2]) ** 0.5
+
+            # Compute cosine similarity
+            cosine_similarity = dot_product / (norm_features1 * norm_features2)
+            return cosine_similarity
         except KeyError:
             print('Book isbn not found..Check inputs')
+    else:
+        return None
+
 
 
 def pearson_similarity(user_preference, id_1, id_2, similarity_type):
@@ -220,3 +228,4 @@ def pearson_similarity(user_preference, id_1, id_2, similarity_type):
             # pearson formula 
             numerator = (3 * sum(x_y)) - (sum(book1_features) * sum(book2_features))
             denominator = (((3 * sum(x_x)) - (sum(book1_features) ** 2)) * ((3 * sum(y_y)) - (sum(book2
+
