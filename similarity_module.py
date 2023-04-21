@@ -165,67 +165,66 @@ def cosine_similarity(user_preference, id_1, id_2, type_):
         return None
 
 
-
 def pearson_similarity(user_preference, id_1, id_2, similarity_type):
-    '''
-    Computes the Pearson correlation between the books or users
-    '''
+    """
+    Computes the Pearson correlation between the books or users.
+    """
     x_y = []
     x_x = []
     y_y = []
-
+    
     if similarity_type == 'user':
         feature_calculation = []
-        user1_rated_books = user_preference['Ratings'][id_1] if id_1 in user_preference['Ratings'] else None
-        user2_rated_books = user_preference['Ratings'][id_2] if id_2 in user_preference['Ratings'] else None
+        user1_features, user2_features = helper_function(user_preference, id_1, id_2)
+        
+        if user1_features is not None and user2_features is not None:
+            for key in user1_features:
+                feature1 = user1_features.get(key)
+                feature2 = user2_features.get(key)
+                
+                for i, j in enumerate(feature1):
+                    x_y.append(feature1[i] * feature2[i])
+                    x_x.append(feature1[i] * feature1[i])
+                    y_y.append(feature2[i] * feature2[i])
 
-        if user1_rated_books is not None and user2_rated_books is not None:
-            common_rated_books = set(user1_rated_books.keys()).intersection(user2_rated_books.keys())
-            
-            if common_rated_books:
-                for book in common_rated_books:
-                    try:
-                        common_rated_books_features = user_preference['Books'][book]
-                        user1_rating = int(user1_rated_books[book]['book-ratings'].replace('"', ""))
-                        user2_rating = int(user2_rated_books[book]['book-ratings'].replace('"', ""))
-
-                        for i in range(3):
-                            x_y.append(common_rated_books_features[list(common_rated_books_features.keys())[i]] * common_rated_books_features[list(common_rated_books_features.keys())[i]])
-                            x_x.append(common_rated_books_features[list(common_rated_books_features.keys())[i]] * common_rated_books_features[list(common_rated_books_features.keys())[i]])
-                            y_y.append(common_rated_books_features[list(common_rated_books_features.keys())[i]] * common_rated_books_features[list(common_rated_books_features.keys())[i]])
-
-                        # pearson formula 
-                        numerator = (3 * (user1_rating * user2_rating)) - (sum(common_rated_books_features.values()) * (user1_rating + user2_rating))
-                        denominator = (((3 * sum(x_x)) - (sum(common_rated_books_features.values()) ** 2)) * ((3 * sum(y_y)) - (sum(common_rated_books_features.values()) ** 2))) ** 0.5
-                        cofficient  = numerator / denominator
-                        feature_calculation.append(cofficient)
-                    except KeyError:
-                        continue
-
-                if feature_calculation:
-                    return sum(feature_calculation) / len(feature_calculation)
-
+                numerator = (len(feature1) * sum(x_y)) - sum(feature1) * sum(feature2)
+                denominator = (((len(feature1) * sum(x_x)) - (sum(feature1) ** 2)) * ((len(feature1) * sum(y_y)) - (sum(feature2) ** 2))) ** 0.5
+                coefficient = numerator / denominator
+                feature_calculation.append(coefficient)
+                
+            return sum(feature_calculation) / len(feature_calculation)
+        
         else:
-            print('User id not found..Check inputs')
-
+            print('No common books found between the users')
+            return None
+            
     elif similarity_type == 'book':
         try:
-            book1_features = [
+            features1 = [
                 int(user_preference['Books'][id_1]['Book-Title']),
                 int(user_preference['Books'][id_1]['Book-Author']),
                 int(user_preference['Books'][id_1]['Year-Of-Publication'])
             ]
-            book2_features = [
+            features2 = [
                 int(user_preference['Books'][id_2]['Book-Title']),
                 int(user_preference['Books'][id_2]['Book-Author']),
                 int(user_preference['Books'][id_2]['Year-Of-Publication'])
             ]
-            for i in range(3):
-                x_y.append(book1_features[i] * book2_features[i])
-                x_x.append(book1_features[i] * book1_features[i])
-                y_y.append(book2_features[i] * book2_features[i])
+            for i, j in enumerate(features1):
+                x_y.append(features1[i] * features2[i])
+                x_x.append(features1[i] * features1[i])
+                y_y.append(features2[i] * features2[i])
 
-            # pearson formula 
-            numerator = (3 * sum(x_y)) - (sum(book1_features) * sum(book2_features))
-            denominator = (((3 * sum(x_x)) - (sum(book1_features) ** 2)) * ((3 * sum(y_y)) - (sum(book2
+            numerator = (len(features1) * sum(x_y)) - sum(features1) * sum(features2)
+            denominator = (((len(features1) * sum(x_x)) - (sum(features1) ** 2)) * ((len(features1) * sum(y_y)) - (sum(features2) ** 2))) ** 0.5
+            coefficient = numerator / denominator
+            return coefficient
+        
+        except KeyError:
+            print('Book ISBN not found. Check inputs.')
+            return None
+    else:
+        print('Invalid type of similarity. Please enter either "user" or "book".')
+        return None
+
 
