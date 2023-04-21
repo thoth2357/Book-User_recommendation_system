@@ -1,4 +1,12 @@
 def user_preferences() -> dict:
+    """Load book ratings and book information from CSV files and organize them into a dictionary of user preferences.
+
+    Returns:
+        A dictionary with two keys: 'Books' and 'Ratings'. The value for 'Books' is another dictionary containing book
+        information for each book in the dataset, keyed by ISBN. The value for 'Ratings' is another dictionary containing
+        the book ratings for each user in the dataset, keyed by user ID. Each value in 'Ratings' is itself a dictionary,
+        keyed by ISBN, containing the book rating for that user and book.
+    """
     user_preference = {'Books': {}, 'Ratings': {}}
 
     with open('Book-Ratings.csv', 'r', encoding='ISO-8859-1') as ratings_file:
