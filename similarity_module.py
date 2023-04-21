@@ -105,12 +105,12 @@ def euclidean_similarity(user_preference, id_1, id_2, similarity_type):
         print('Invalid similarity type. Choose "user" or "book".')
         return None
 
-def cosine_similarity(user_preference, id_1, id_2, type_):
+def cosine_similarity(user_preference, id_1, id_2, similarity_type):
     '''
     Computes the cosine similarity between books or users. Cosine similarity is commonly used in document similarity 
     and text mining.
     '''
-    if type_ == 'user':
+    if similarity_type == 'user':
         # Get features for both users
         user1_features, user2_features = helper_function(user_preference, id_1, id_2)
 
@@ -137,7 +137,7 @@ def cosine_similarity(user_preference, id_1, id_2, type_):
         else:
             return None
 
-    elif type_ == 'book':
+    elif similarity_type == 'book':
         try:
             # Retrieve features for the two books
             features1 = [
@@ -227,11 +227,11 @@ def pearson_similarity(user_preference, id_1, id_2, similarity_type):
         print('Invalid type of similarity. Please enter either "user" or "book".')
         return None
 
-def jaccard_similarity(user_preference, id_1, id_2, type_):
+def jaccard_similarity(user_preference, id_1, id_2, similarity_type):
     """
     Compute the Jaccard similarity between two sets of data. The higher the number, the more similar the two sets of data.
     """
-    if type_ == 'user':
+    if similarity_type == 'user':
         feature_calculation = []
         try:
             user1_rated_books = user_preference['Ratings'][id_1]
@@ -272,7 +272,7 @@ def jaccard_similarity(user_preference, id_1, id_2, type_):
                 return None
         except KeyError:
             print('Wrong user id..Check inputs')
-    elif type_ == 'book':
+    elif similarity_type == 'book':
         try:
             features1 = [
                 int(user_preference['Books'][id_1]['Book-Title']),
@@ -289,3 +289,39 @@ def jaccard_similarity(user_preference, id_1, id_2, type_):
             return float(intersections) / union
         except KeyError:
             print('Wrong book isbn..Check inputs')
+
+def manhattan_similarity(user_preference, id_1, id_2, feature_type):
+    """
+    Measures the Manhattan similarity between two users or two books.
+    """
+    if feature_type == "user":
+        # Get features for the two users
+        user1_features, user2_features = helper_function(user_preference, id_1, id_2)
+        if user1_features is None or user2_features is None:
+            return None
+        # Calculate the Manhattan distance between the two users
+        distance = sum(abs(a - b) for _, (a, _, _, b) in user1_features.items() & user2_features.items())
+        return distance / len(user1_features)
+    
+    elif feature_type == "book":
+        # Get features for the two books
+        try:
+            feature1 = [
+                int(user_preference["Books"][id_1]["Book-Title"]),
+                int(user_preference["Books"][id_1]["Book-Author"]),
+                int(user_preference["Books"][id_1]["Year-Of-Publication"]),
+            ]
+            feature2 = [
+                int(user_preference["Books"][id_2]["Book-Title"]),
+                int(user_preference["Books"][id_2]["Book-Author"]),
+                int(user_preference["Books"][id_2]["Year-Of-Publication"]),
+            ]
+            # Calculate the Manhattan distance between the two books
+            distance = sum(abs(a - b) for a, b in zip(feature1, feature2))
+            return distance
+        except KeyError:
+            print("Book ID not found. Check inputs.")
+            return None
+    else:
+        print("Invalid feature type. Choose either 'user' or 'book'.")
+        return None
