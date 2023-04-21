@@ -227,4 +227,65 @@ def pearson_similarity(user_preference, id_1, id_2, similarity_type):
         print('Invalid type of similarity. Please enter either "user" or "book".')
         return None
 
-
+def jaccard_similarity(user_preference, id_1, id_2, type_):
+    """
+    Compute the Jaccard similarity between two sets of data. The higher the number, the more similar the two sets of data.
+    """
+    if type_ == 'user':
+        feature_calculation = []
+        try:
+            user1_rated_books = user_preference['Ratings'][id_1]
+            user2_rated_books = user_preference['Ratings'][id_2]
+            common_rated_books = set(user1_rated_books.keys()).intersection(user2_rated_books.keys())
+            if common_rated_books:
+                common_rated_books_features = {}
+                book_na = []
+                for book in common_rated_books:
+                    try:
+                        common_rated_books_features[book] = user_preference['Books'][book]
+                    except KeyError:
+                        book_na.append(book)
+                for book in common_rated_books:
+                    if book not in book_na:
+                        user1_features = [
+                            int(common_rated_books_features[book]['Book-Title']),
+                            int(common_rated_books_features[book]['Book-Author']),
+                            int(common_rated_books_features[book]['Year-Of-Publication']),
+                            int(user1_rated_books[book]['book-ratings'].replace('"', ""))
+                        ]
+                        user2_features = [
+                            int(common_rated_books_features[book]['Book-Title']),
+                            int(common_rated_books_features[book]['Book-Author']),
+                            int(common_rated_books_features[book]['Year-Of-Publication']),
+                            int(user2_rated_books[book]['book-ratings'].replace('"', ""))
+                        ]
+                        intersections = len(list(set(user1_features).intersection(user2_features)))
+                        union = (len(user1_features) + len(user2_features)) - intersections
+                        result = float(intersections) / union
+                        feature_calculation.append(result)
+                if len(feature_calculation) == 0:
+                    print('No common books found between the users')
+                    return None
+                return sum(feature_calculation) / len(feature_calculation)
+            else:
+                print('No common books found between the users')
+                return None
+        except KeyError:
+            print('Wrong user id..Check inputs')
+    elif type_ == 'book':
+        try:
+            features1 = [
+                int(user_preference['Books'][id_1]['Book-Title']),
+                int(user_preference['Books'][id_1]['Book-Author']),
+                int(user_preference['Books'][id_1]['Year-Of-Publication'])
+            ]
+            features2 = [
+                int(user_preference['Books'][id_2]['Book-Title']),
+                int(user_preference['Books'][id_2]['Book-Author']),
+                int(user_preference['Books'][id_2]['Year-Of-Publication'])
+            ]
+            intersections = len(list(set(features1).intersection(features2)))
+            union = (len(features1) + len(features2)) - intersections
+            return float(intersections) / union
+        except KeyError:
+            print('Wrong book isbn..Check inputs')
