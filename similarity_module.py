@@ -325,3 +325,34 @@ def manhattan_similarity(user_preference, id_1, id_2, feature_type):
     else:
         print("Invalid feature type. Choose either 'user' or 'book'.")
         return None
+    
+
+def get_n_most_similar_items(user_preference, id_1, n, item_type, similarity_measure):
+    """
+    Returns the n most similar items to the given item (book or user).
+    """
+    if item_type == 'user':
+        try:
+            similarity_scores = []
+            for user_id in user_preference['Ratings']:
+                if user_id != id_1:
+                    similarity = similarity_measure(user_preference, id_1, user_id, item_type)
+                    if similarity is not None:
+                        similarity_scores.append((user_id, similarity))
+            similarity_scores.sort(key=lambda x: x[1], reverse=True)
+            return similarity_scores[:n]
+        except KeyError:
+            print('User ID not found in user preference')
+    elif item_type == 'book':
+        try:
+            similarity_scores = []
+            for book_id in user_preference['Books']:
+                if book_id != id_1:
+                    similarity = similarity_measure(user_preference, id_1, book_id, item_type)
+                    if similarity is not None:
+                        similarity_scores.append((book_id, similarity))
+            similarity_scores.sort(key=lambda x: x[1], reverse=True)
+            return similarity_scores[:n]
+        except KeyError:
+            print('Book ISBN not found in user preference')
+
